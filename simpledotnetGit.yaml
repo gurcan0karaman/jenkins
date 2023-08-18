@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demoapp-deployment
+  namespace: btis
+spec:
+  selector:
+    matchLabels:
+      component: dotnetapp
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        component: dotnetapp
+    spec:
+      containers:
+        - name: dotnetapp
+          image: warsoul/dotnet-docker:v1
+          ports:
+            - containerPort: 80
+              protocol: TCP
+          resources:
+            limits:
+              memory: "1Gi"
+              cpu: "250m"            
+--- 
+apiVersion: v1
+kind: Service
+metadata:
+    name: demoapp-service
+    namespace: btis
+spec:
+    ports:
+    - port: 80
+      targetPort: 80
+    selector:
+        component: dotnetapp
+    type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: demo-ingress
+  namespace: btis
+  #annotations:
+    #nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+    ingressClassName: nginx
+    rules:
+    - host: dotnet.logo.com.tr
+      http:
+        paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: demoapp-service
+              port:
+                number: 80
